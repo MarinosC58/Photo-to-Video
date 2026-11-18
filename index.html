@@ -19,7 +19,7 @@ button:disabled{opacity:.5;cursor:wait}canvas{display:block;width:100%;aspect-ra
 <p><input id="photo" type="file" accept="image/jpeg,image/png" multiple></p>
 <div id="slides"></div>
 <canvas id="preview" width="1920" height="1080"></canvas>
-<button id="convert" disabled> Πάτα δαμέ για MP4 τζιαι κάμε υπομονή </button>
+<button id="convert" disabled> Μετατροπή σε MP4 </button>
 <p id="status" role="status"> Δκιάλεξε εικόνες.</p><p id="download"></p>
 <small> Αλλάσεις τη σειρά με τα βελούθκια αν θέλεις. Κάθε φωτογραφία εμφανίζεται για 6 δευτερόλεπτα. </small>
 </section></main>
@@ -38,7 +38,7 @@ if(!window.FFmpegWASM)await loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10
 if(!window.FFmpegUtil)await loadScript('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
 const {FFmpeg}=window.FFmpegWASM,{toBlobURL}=window.FFmpegUtil;
 ff=new FFmpeg();
-ff.on('log',({message})=>{if(message.includes('frame='))status.textContent='Κωδικοποίηση: '+message.slice(0,110)});
+ff.on('log',({message})=>{if(message.includes('frame='))status.textContent='Βάσταξε λίο: '+message.slice(0,110)});
 const coreBase='https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
 await ff.load({
 classWorkerURL:new URL('./ffmpeg-worker.js',document.baseURI).href,
@@ -65,7 +65,7 @@ const data=await ff.readFile('output.mp4');if(!data.length)throw Error('Κενό
 if(link)URL.revokeObjectURL(link);
 link=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));
 const a=document.createElement('a');a.href=link;a.download='photo_to_tv_1080p_25fps_'+(images.length*6)+'s.mp4';a.textContent='Κατέβασε το MP4 που δαμέ';download.replaceChildren(a);
-status.textContent='Ετέλειωσε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα. Έλεγξε το MP4 πριν από χρήση.';
+status.textContent='Ετέλειωσε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα.';
 }catch(e){console.error(e);status.textContent='Σφάλμα: '+e.message+'\nΣτείλε το πλήρες μήνυμα.'}
 finally{if(ff)try{ff.terminate()}catch{}busy=false;photo.disabled=false;renderList()}
 };
