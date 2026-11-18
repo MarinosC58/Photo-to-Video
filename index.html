@@ -38,7 +38,7 @@ ff.on('log',({message})=>{if(message.includes('frame='))status.textContent='Κω
 const coreBase='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
 await ff.load({
 classWorkerURL:new URL('./ffmpeg-worker.js',document.baseURI).href,
-coreURL:await toBlobURL(coreBase+'/ffmpeg-core.js','text/javascript'),
+coreURL:new URL('./ffmpeg-core.js',document.baseURI).href,
 wasmURL:await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm')
 });
 status.textContent='Δημιουργία MP4…';
