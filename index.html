@@ -13,15 +13,15 @@ button:disabled{opacity:.5;cursor:wait}canvas{display:block;width:100%;aspect-ra
 #slides{display:flex;flex-direction:column;gap:7px;margin:12px 0}#slides button{padding:5px 10px;font-size:13px}#slides .slide{display:flex;align-items:center;gap:10px;background:#263650;border-radius:7px;padding:7px}#slides .name{flex:1;overflow-wrap:anywhere}#slides .controls{display:flex;gap:5px}#slides .active{outline:2px solid #4d9aff}
 </style>
 </head>
-<body><main><h1>Photo to TV Video</h1>
-<p>MP4 · H.264 · 1920 × 1080 · 25 fps · 6 δευτερόλεπτα ανά φωτογραφία</p>
-<section><label for="photo">Επιλογή φωτογραφιών JPG / PNG (μία ή πολλές)</label>
+<body><main><h1>Μαρίνος Photo to TV Video</h1>
+<p>MP4 · 1920 × 1080 · 25 fps </p>
+<section><label for="photo"> Δκιάλεξε JPG / PNG </label>
 <p><input id="photo" type="file" accept="image/jpeg,image/png" multiple></p>
 <div id="slides"></div>
 <canvas id="preview" width="1920" height="1080"></canvas>
-<button id="convert" disabled>Μετατροπή σε ένα MP4</button>
-<p id="status" role="status">Διάλεξε φωτογραφίες.</p><p id="download"></p>
-<small>Χωρίς εφέ μετάβασης. Κάθε φωτογραφία εμφανίζεται για 6 δευτερόλεπτα. Μπορείς να αλλάξεις τη σειρά με τα βελάκια. Η μετατροπή γίνεται στον browser και απαιτεί σύνδεση για τη φόρτωση FFmpeg.</small>
+<button id="convert" disabled> Convert to MP4</button>
+<p id="status" role="status"> Δκιάλεξε εικόνες.</p><p id="download"></p>
+<small> Κάθε φωτογραφία εμφανίζεται για 6 δευτερόλεπτα. Αλλάσεις τη σειρά με τα βελούθκια αν θέλεις.</small>
 </section></main>
 <script>
 const photo=document.getElementById('photo'),canvas=document.getElementById('preview'),ctx=canvas.getContext('2d'),button=document.getElementById('convert'),status=document.getElementById('status'),download=document.getElementById('download'),slides=document.getElementById('slides');
@@ -48,7 +48,7 @@ wasmURL:await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm')
 // Δημιουργούμε στατικές εικόνες Full HD και αρχείο concat με διάρκεια 6 δευτ. ανά εικόνα.
 let manifest='ffconcat version 1.0\n';
 for(let i=0;i<images.length;i++){
-status.textContent='Προετοιμασία φωτογραφίας '+(i+1)+'/'+images.length+'…';
+status.textContent='Preparing '+(i+1)+'/'+images.length+'…';
 draw(images[i].img);
 const blob=await canvasPNG(),filename='slide'+String(i).padStart(5,'0')+'.png';
 await ff.writeFile(filename,new Uint8Array(await blob.arrayBuffer()));
@@ -57,7 +57,7 @@ manifest+='file '+filename+'\nduration 6\n';
 // Επαναλαμβάνουμε το τελευταίο αρχείο ώστε να έχει και αυτό πλήρη διάρκεια.
 manifest+='file slide'+String(images.length-1).padStart(5,'0')+'.png\n';
 await ff.writeFile('slides.ffcat',new TextEncoder().encode(manifest));
-status.textContent='Δημιουργία MP4…';
+status.textContent='Βάσταξε λλίο…';
 const totalFrames=images.length*150;
 const code=await ff.exec(['-f','concat','-safe','0','-i','slides.ffcat','-vf','fps=25','-frames:v',String(totalFrames),'-c:v','libx264','-pix_fmt','yuv420p','-r','25','-movflags','+faststart','output.mp4']);
 if(code!==0)throw Error('FFmpeg exit '+code);
@@ -65,7 +65,7 @@ const data=await ff.readFile('output.mp4');if(!data.length)throw Error('Κενό
 if(link)URL.revokeObjectURL(link);
 link=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));
 const a=document.createElement('a');a.href=link;a.download='photo_to_tv_1080p_25fps_'+(images.length*6)+'s.mp4';a.textContent='Κατέβασε το MP4';download.replaceChildren(a);
-status.textContent='Ολοκληρώθηκε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα. Έλεγξε το MP4 πριν από τηλεοπτική χρήση.';
+status.textContent='Ολοκληρώθηκε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα. Έλεγξε το MP4 πριν από χρήση.';
 }catch(e){console.error(e);status.textContent='Σφάλμα: '+e.message+'\nΣτείλε το πλήρες μήνυμα.'}
 finally{if(ff)try{ff.terminate()}catch{}busy=false;photo.disabled=false;renderList()}
 };
