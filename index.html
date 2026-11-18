@@ -19,7 +19,7 @@ button:disabled{opacity:.5;cursor:wait}canvas{display:block;width:100%;aspect-ra
 <p><input id="photo" type="file" accept="image/jpeg,image/png" multiple></p>
 <div id="slides"></div>
 <canvas id="preview" width="1920" height="1080"></canvas>
-<button id="convert" disabled> Πάτα δαμέ για MP4</button>
+<button id="convert" disabled> Πάτα δαμέ για MP4 τζιαι κάμε υπομονή</button>
 <p id="status" role="status"> Δκιάλεξε εικόνες.</p><p id="download"></p>
 <small> Αλλάσεις τη σειρά με τα βελούθκια αν θέλεις. Κάθε φωτογραφία εμφανίζεται για 6 δευτερόλεπτα. </small>
 </section></main>
@@ -64,8 +64,8 @@ if(code!==0)throw Error('FFmpeg exit '+code);
 const data=await ff.readFile('output.mp4');if(!data.length)throw Error('Κενό MP4');
 if(link)URL.revokeObjectURL(link);
 link=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));
-const a=document.createElement('a');a.href=link;a.download='photo_to_tv_1080p_25fps_'+(images.length*6)+'s.mp4';a.textContent='Κατέβασε το MP4';download.replaceChildren(a);
-status.textContent='Ολοκληρώθηκε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα. Έλεγξε το MP4 πριν από χρήση.';
+const a=document.createElement('a');a.href=link;a.download='photo_to_tv_1080p_25fps_'+(images.length*6)+'s.mp4';a.textContent='Κατέβασ'το MP4 που δαμέ';download.replaceChildren(a);
+status.textContent='Ετέλειωσε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα. Έλεγξε το MP4 πριν από χρήση.';
 }catch(e){console.error(e);status.textContent='Σφάλμα: '+e.message+'\nΣτείλε το πλήρες μήνυμα.'}
 finally{if(ff)try{ff.terminate()}catch{}busy=false;photo.disabled=false;renderList()}
 };
