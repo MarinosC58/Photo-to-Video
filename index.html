@@ -35,10 +35,10 @@ if(!window.FFmpegUtil)await loadScript('https://unpkg.com/@ffmpeg/util@0.12.1/di
 const {FFmpeg}=window.FFmpegWASM,{toBlobURL}=window.FFmpegUtil;
 ff=new FFmpeg();
 ff.on('log',({message})=>{if(message.includes('frame='))status.textContent='Κωδικοποίηση: '+message.slice(0,110)});
-const coreBase='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+const coreBase='https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
 await ff.load({
-classWorkerURL:URL.createObjectURL(new Blob(["importScripts('"+new URL('./ffmpeg-worker.js',document.baseURI).href+"');"],{type:'text/javascript'})),
-coreURL:new URL('./ffmpeg-core.js',document.baseURI).href,
+classWorkerURL:new URL('./ffmpeg-worker.js',document.baseURI).href,
+coreURL:await toBlobURL(coreBase+'/ffmpeg-core.js','text/javascript'),
 wasmURL:await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm')
 });
 status.textContent='Δημιουργία MP4…';
