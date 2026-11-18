@@ -37,7 +37,7 @@ ff=new FFmpeg();
 ff.on('log',({message})=>{if(message.includes('frame='))status.textContent='Κωδικοποίηση: '+message.slice(0,110)});
 const coreBase='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
 await ff.load({
-classWorkerURL:new URL('./ffmpeg-worker.js',document.baseURI).href,
+classWorkerURL:URL.createObjectURL(new Blob(["importScripts('"+new URL('./ffmpeg-worker.js',document.baseURI).href+"');"],{type:'text/javascript'})),
 coreURL:new URL('./ffmpeg-core.js',document.baseURI).href,
 wasmURL:await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm')
 });
