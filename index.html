@@ -10,24 +10,28 @@ section{background:#1c2940;padding:22px;border-radius:15px}
 button,input{font:inherit}button{background:#4d9aff;color:#081322;border:0;padding:12px 18px;border-radius:9px;cursor:pointer;font-weight:700}
 button:disabled{opacity:.5;cursor:wait}canvas{display:block;width:100%;aspect-ratio:16/9;background:#000;margin:18px 0;border-radius:8px}
 #status{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#a8d0ff}small{color:#bac8dc}
+#slides{display:flex;flex-direction:column;gap:7px;margin:12px 0}#slides button{padding:5px 10px;font-size:13px}#slides .slide{display:flex;align-items:center;gap:10px;background:#263650;border-radius:7px;padding:7px}#slides .name{flex:1;overflow-wrap:anywhere}#slides .controls{display:flex;gap:5px}#slides .active{outline:2px solid #4d9aff}
 </style>
 </head>
 <body><main><h1>Photo to TV Video</h1>
-<p>MP4 · H.264 · 1920 × 1080 · 25 fps · 6 δευτερόλεπτα</p>
-<section><label for="photo">Επιλογή φωτογραφίας JPG / PNG</label>
-<p><input id="photo" type="file" accept="image/jpeg,image/png"></p>
+<p>MP4 · H.264 · 1920 × 1080 · 25 fps · 6 δευτερόλεπτα ανά φωτογραφία</p>
+<section><label for="photo">Επιλογή φωτογραφιών JPG / PNG (μία ή πολλές)</label>
+<p><input id="photo" type="file" accept="image/jpeg,image/png" multiple></p>
+<div id="slides"></div>
 <canvas id="preview" width="1920" height="1080"></canvas>
-<button id="convert" disabled>Μετατροπή σε MP4</button>
-<p id="status" role="status">Διάλεξε φωτογραφία.</p><p id="download"></p>
-<small>Η μετατροπή γίνεται στον browser. Απαιτείται σύνδεση στο διαδίκτυο για τη φόρτωση FFmpeg.</small>
+<button id="convert" disabled>Μετατροπή σε ένα MP4</button>
+<p id="status" role="status">Διάλεξε φωτογραφίες.</p><p id="download"></p>
+<small>Χωρίς εφέ μετάβασης. Κάθε φωτογραφία εμφανίζεται για 6 δευτερόλεπτα. Μπορείς να αλλάξεις τη σειρά με τα βελάκια. Η μετατροπή γίνεται στον browser και απαιτεί σύνδεση για τη φόρτωση FFmpeg.</small>
 </section></main>
 <script>
-const photo=document.getElementById('photo'),canvas=document.getElementById('preview'),ctx=canvas.getContext('2d'),button=document.getElementById('convert'),status=document.getElementById('status'),download=document.getElementById('download');
-let selected=false,link=null;
+const photo=document.getElementById('photo'),canvas=document.getElementById('preview'),ctx=canvas.getContext('2d'),button=document.getElementById('convert'),status=document.getElementById('status'),download=document.getElementById('download'),slides=document.getElementById('slides');
+let images=[],link=null,busy=false;
 function draw(img){const W=1920,H=1080;ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);const cover=Math.max(W/img.width,H/img.height);ctx.save();ctx.filter='blur(42px)';ctx.drawImage(img,(W-img.width*cover)/2,(H-img.height*cover)/2,img.width*cover,img.height*cover);ctx.restore();ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,W,H);const fit=Math.min(W/img.width,H/img.height);ctx.drawImage(img,(W-img.width*fit)/2,(H-img.height*fit)/2,img.width*fit,img.height*fit)}
-photo.onchange=()=>{selected=false;button.disabled=true;download.textContent='';const file=photo.files[0];if(!file)return;if(!['image/jpeg','image/png'].includes(file.type)){status.textContent='Επίλεξε JPG ή PNG.';return}const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{draw(img);selected=true;button.disabled=false;status.textContent='Η προεπισκόπηση είναι έτοιμη.';URL.revokeObjectURL(url)};img.onerror=()=>{status.textContent='Δεν διαβάστηκε η φωτογραφία.';URL.revokeObjectURL(url)};img.src=url};
+function renderList(){slides.replaceChildren();images.forEach((item,i)=>{const row=document.createElement('div');row.className='slide';const name=document.createElement('span');name.className='name';name.textContent=(i+1)+'. '+item.name+' (6 δευτ.)';name.onclick=()=>{document.querySelectorAll('.slide').forEach(x=>x.classList.remove('active'));row.classList.add('active');draw(item.img)};name.style.cursor='pointer';const controls=document.createElement('span');controls.className='controls';for(const [label,delta] of [['↑',-1],['↓',1]]){const b=document.createElement('button');b.textContent=label;b.title=delta<0?'Πιο πάνω':'Πιο κάτω';b.disabled=busy||(i+delta<0)||(i+delta>=images.length);b.onclick=()=>{[images[i],images[i+delta]]=[images[i+delta],images[i]];renderList()};controls.appendChild(b)}row.append(name,controls);slides.appendChild(row)});if(images.length){draw(images[0].img);slides.firstChild.classList.add('active')}button.disabled=busy||!images.length}
+photo.onchange=async()=>{if(busy)return;images=[];button.disabled=true;download.replaceChildren();slides.replaceChildren();const files=Array.from(photo.files);if(!files.length){status.textContent='Διάλεξε φωτογραφίες.';return}status.textContent='Ανάγνωση φωτογραφιών…';for(const file of files){if(!['image/jpeg','image/png'].includes(file.type)){status.textContent='Μη υποστηριζόμενο αρχείο: '+file.name;continue}try{const img=await new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),image=new Image();image.onload=()=>{URL.revokeObjectURL(url);resolve(image)};image.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Αδυναμία ανάγνωσης'))};image.src=url});images.push({name:file.name,img})}catch(e){console.error(file.name,e)}}renderList();status.textContent=images.length+' φωτογραφίες · '+(images.length*6)+' δευτερόλεπτα συνολικά.'};
 function loadScript(src){return new Promise((ok,bad)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>bad(Error('Αποτυχία φόρτωσης '+src));document.head.appendChild(s)})}
-button.onclick=async()=>{if(!selected)return;button.disabled=true;download.textContent='';let ff;try{
+function canvasPNG(){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Αποτυχία εικόνας')),'image/png'))}
+button.onclick=async()=>{if(!images.length||busy)return;busy=true;button.disabled=true;photo.disabled=true;renderList();download.replaceChildren();let ff;try{
 if(location.protocol!=='https:'&&location.hostname!=='localhost')throw Error('Άνοιξε την ιστοσελίδα μέσω HTTPS.');
 status.textContent='Φόρτωση FFmpeg…';
 if(!window.FFmpegWASM)await loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
@@ -41,17 +45,28 @@ classWorkerURL:new URL('./ffmpeg-worker.js',document.baseURI).href,
 coreURL:await toBlobURL(coreBase+'/ffmpeg-core.js','text/javascript'),
 wasmURL:await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm')
 });
+// Δημιουργούμε στατικές εικόνες Full HD και αρχείο concat με διάρκεια 6 δευτ. ανά εικόνα.
+let manifest='ffconcat version 1.0\n';
+for(let i=0;i<images.length;i++){
+status.textContent='Προετοιμασία φωτογραφίας '+(i+1)+'/'+images.length+'…';
+draw(images[i].img);
+const blob=await canvasPNG(),filename='slide'+String(i).padStart(5,'0')+'.png';
+await ff.writeFile(filename,new Uint8Array(await blob.arrayBuffer()));
+manifest+='file '+filename+'\nduration 6\n';
+}
+// Επαναλαμβάνουμε το τελευταίο αρχείο ώστε να έχει και αυτό πλήρη διάρκεια.
+manifest+='file slide'+String(images.length-1).padStart(5,'0')+'.png\n';
+await ff.writeFile('slides.ffcat',new TextEncoder().encode(manifest));
 status.textContent='Δημιουργία MP4…';
-const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Αποτυχία εικόνας')),'image/png'));
-await ff.writeFile('frame.png',new Uint8Array(await blob.arrayBuffer()));
-const code=await ff.exec(['-loop','1','-framerate','25','-i','frame.png','-frames:v','150','-c:v','libx264','-pix_fmt','yuv420p','-r','25','-movflags','+faststart','output.mp4']);
+const totalFrames=images.length*150;
+const code=await ff.exec(['-f','concat','-safe','0','-i','slides.ffcat','-vf','fps=25','-frames:v',String(totalFrames),'-c:v','libx264','-pix_fmt','yuv420p','-r','25','-movflags','+faststart','output.mp4']);
 if(code!==0)throw Error('FFmpeg exit '+code);
 const data=await ff.readFile('output.mp4');if(!data.length)throw Error('Κενό MP4');
 if(link)URL.revokeObjectURL(link);
 link=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));
-const a=document.createElement('a');a.href=link;a.download='photo_to_tv_1080p_25fps_6s.mp4';a.textContent='Κατέβασε το MP4';download.replaceChildren(a);
-status.textContent='Ολοκληρώθηκε. Έλεγξε το MP4 πριν από τηλεοπτική χρήση.';
+const a=document.createElement('a');a.href=link;a.download='photo_to_tv_1080p_25fps_'+(images.length*6)+'s.mp4';a.textContent='Κατέβασε το MP4';download.replaceChildren(a);
+status.textContent='Ολοκληρώθηκε: '+images.length+' φωτογραφίες, '+(images.length*6)+' δευτερόλεπτα. Έλεγξε το MP4 πριν από τηλεοπτική χρήση.';
 }catch(e){console.error(e);status.textContent='Σφάλμα: '+e.message+'\nΣτείλε το πλήρες μήνυμα.'}
-finally{if(ff)try{ff.terminate()}catch{}button.disabled=false}
+finally{if(ff)try{ff.terminate()}catch{}busy=false;photo.disabled=false;renderList()}
 };
 </script></body></html>
